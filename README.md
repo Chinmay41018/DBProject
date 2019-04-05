@@ -1,1 +1,1 @@
-# DBProject
+Database Project by Chinmay Joshi (caj2163) and Ashna Aggarwal (aa4213)
