@@ -17,7 +17,8 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session, url_for
+import json
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -162,10 +163,36 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/another')
-def another():
-  return render_template("another.html")
+@app.route('/review')
+def review():
+  return render_template("review.html")
 
+@app.route('/search')
+def search():
+  return render_template("search.html")
+
+@app.route('/write_review', methods=['POST'])
+def write_review():
+  result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))
+  if result:
+    for r in result:
+      print(r)
+      print(r['mediaid'])
+      return render_template('write_review.html', mediaid = r['mediaid'], name = r['name'])
+      
+  else:
+    return render_template('review.html')
+
+@app.route('/submit_review', methods=["POST","GET"])
+def submit_review():
+  userid = session['userid']
+  rating = request.form['rating']
+  review = request.form['review']
+  mediaid = request.form['mediaid']
+  #g.conn.execute('INSERT INTO reviews (text,rating,personid,mediaid) VALUES ({},{},{},{})'.format(rating,review,userid,mediaid))
+  # result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))  
+  # print(request.args['messages'])
+  return render_template('thanks.html')
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
@@ -179,17 +206,23 @@ def add():
 def login():
   logins = g.conn.execute('SELECT * FROM PERSON;')
   login = []
+  ids = []
   for result in logins:
     appendList = [result['username'], result['password']]
     login.append(appendList)
+    ids.append(result['personid'])
   username = request.form['username']
   password = request.form['password']
+
   if ([username,password] in login):
-    return redirect('/index')
+    session['userid'] = ids[login.index([username,password])]
+    return render_template("user.html")
   else:
     return redirect('/')
 
-
+@app.route('/user')
+def user():
+  return render_template("user.html")
 
 
 if __name__ == "__main__":
@@ -214,5 +247,6 @@ if __name__ == "__main__":
 
     HOST, PORT = host, port
     print("running on %s:%d" % (HOST, PORT))
-    app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
+    app.secret_key = "sampe"
+    app.run(host=HOST, port=PORT, debug=True, threaded=threaded)
   run()
