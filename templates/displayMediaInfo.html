@@ -1,0 +1,53 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<body>
+  <h1>Displaying information for media</h1><br>
+  <div> Name: {{data['name']}} </div>
+  <div> Year: {{data['yearofrelease']}} </div>
+  <div> Genre: {{data['genre']}} </div>
+  <div> {% if data['type'] == 'movie'  %}
+      <div>
+          <div> Duration of movie: {{data['duration']}} minutes </div>
+      </div>
+      {% else %}
+      <div>
+          <div> Number of episode: {{data['numepisodes']}} </div>
+          <div> Number of seasons: {{data['numseasons']}} </div>
+      </div>
+      {% endif %}
+  </div>
+  <br>
+  <div> Actors: {% for n in data['actors']%} 
+    <div> {{n['name']}} </div>
+    {% endfor %}
+  </div>
+
+  <br>
+  <div> Awards: {% for n in data['awards']%} 
+      <div> {{n['name']}} in {{n['year']}} </div>
+      {% endfor %}
+  </div>
+
+  <br>
+  <div> Number of reviews: {{data['number_reviews']}} </div>
+  <div> Average rating: {{data['average_rating']}} </div>
+  <div> Reviews: {% for n in data['reviews']%} 
+      <div> {{n['rating']}} stars </div>
+      <div> {{n['text']}} </div>
+      <br>
+      {% endfor %}
+  </div>
+  <br>
+  <p><a href="user">Go back to the home page</a></p>
+
+
+</body>
+
+
+</html>
