@@ -1,0 +1,29 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<body>
+  <h1>Displaying information for actor</h1><br>
+  <div> Name: {{data['name']}} </div>
+  <div> Gender: {{data['gender']}} </div>
+  <div> Date of birth: {{data['dateofbirth']}} </div>
+  <br>
+  <div> Media: {% for n in data['medias']%} 
+    <div> Name - {{n['name']}} </div>
+    <div> Year - {{n['year']}} </div>
+    <div> Genre - {{n['genre']}} </div>
+    <div> Language - {{n['language']}} </div>
+    <div> Type - {{n['type']}} </div>
+    <br>
+    {% endfor %}
+  </div>
+  <br>
+  <p><a href="user">Go back to the home page</a></p>
+</body>
+
+
+</html>

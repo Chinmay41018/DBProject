@@ -163,6 +163,87 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
+
+def get_media_details(r):
+  info = dict(r)
+  print("Started here")
+  info['awards'] = []
+  awards = g.conn.execute("SELECT * FROM award_given WHERE mediaid = {} ".format(r['mediaid']))
+  if awards:
+    for a in awards:
+      award_details = g.conn.execute("SELECT * FROM award WHERE awardid = {} ".format(a['awardid']))
+      if award_details:
+        for ad in award_details:
+          info['awards'].append({
+            'name': ad['name'],
+            'year': a['year']
+          })
+          break
+
+  info['actors'] = []
+  actors = g.conn.execute("SELECT * FROM acts_in WHERE mediaid = {} ".format(r['mediaid']))
+  if actors:
+    for a in actors:
+      actor_details = g.conn.execute("SELECT * FROM actor WHERE actorid = {} ".format(a['actorid']))
+      if actor_details:
+        for ad in actor_details:
+          info['actors'].append({
+            'name': ad['name']
+          })
+          break
+
+  info['reviews'] = []
+  reviews = g.conn.execute("SELECT * FROM reviews WHERE mediaid = {} ".format(r['mediaid']))
+  if reviews:
+    for a in reviews:
+      info['reviews'].append({
+        'text': a['text'],
+        'rating': a['rating']
+      })
+
+  info['number_reviews'] = len(info['reviews'])
+  if len(info['reviews']) > 0:
+    info['average_rating'] = sum([f['rating'] for f in info['reviews']]) / len(info['reviews'])
+  else:
+    info['average_rating'] = 0
+
+  if(info['type']=='series'):
+    seriesinfo = g.conn.execute("SELECT * FROM series WHERE mediaid = {} ".format(r['mediaid']))
+    if seriesinfo:
+      for sinf in seriesinfo:
+        info['numseasons']= sinf['numberofseasons']
+        info['numepisodes']= sinf['numberofepisodes']
+  elif(info['type']=='movie'):
+    movieinfo = g.conn.execute("SELECT * FROM movie WHERE movieid = {} ".format(r['mediaid']))
+    if movieinfo:
+      for minf in movieinfo:
+        info['duration']= minf['duration']
+  context = dict(data = info)
+  return render_template("displayMediaInfo.html",**context)
+
+def get_actor_details(r):
+  info = dict(r)
+
+  info['medias'] = []
+  medias = g.conn.execute("SELECT * FROM acts_in WHERE actorid = {} ".format(r['actorid']))
+  if medias:
+    for a in medias:
+      media_details = g.conn.execute("SELECT * FROM media WHERE mediaid = {} ".format(a['mediaid']))
+      if media_details:
+        for ad in media_details:
+          info['medias'].append({
+            'name': ad['name'],
+            'year': ad['yearofrelease'],
+            'genre': ad['genre'],
+            'language': ad['language'],
+            'type': ad['type']
+          })
+          break
+
+  context = dict(data = info)
+  return render_template("displayActorInfo.html",**context)
+
+
 @app.route('/review')
 def review():
   return render_template("review.html")
@@ -171,6 +252,22 @@ def review():
 def search():
   return render_template("search.html")
 
+@app.route('/search_query', methods=["POST"])
+def search_query():
+  if request.form['search_type'] == 'media':
+    result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['query']))
+    if result:
+      for r in result:
+        return get_media_details(r)
+      return render_template('search.html')   
+  else:
+    result = g.conn.execute("SELECT * FROM actor WHERE name = '{}' ".format(request.form['query']))
+    if result:
+      for r in result:
+        return get_actor_details(r)
+      return render_template('search.html')  
+
+
 @app.route('/write_review', methods=['POST'])
 def write_review():
   result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))
@@ -178,9 +275,14 @@ def write_review():
     for r in result:
       print(r)
       print(r['mediaid'])
+      check = g.conn.execute("SELECT * FROM reviews WHERE personid = '{}' AND mediaid = '{}' ".format(session['userid'], r['mediaid']))
+
+      if check:
+        for c in check:
+          print("here here")
+          return render_template('already_reviewed.html')
+
       return render_template('write_review.html', mediaid = r['mediaid'], name = r['name'])
-      
-  else:
     return render_template('review.html')
 
 @app.route('/submit_review', methods=["POST","GET"])
@@ -189,7 +291,7 @@ def submit_review():
   rating = request.form['rating']
   review = request.form['review']
   mediaid = request.form['mediaid']
-  #g.conn.execute('INSERT INTO reviews (text,rating,personid,mediaid) VALUES ({},{},{},{})'.format(rating,review,userid,mediaid))
+  g.conn.execute("INSERT INTO reviews(text,rating,personid,mediaid) VALUES ('{}',{},{},{})".format(review,rating,userid,mediaid))
   # result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))  
   # print(request.args['messages'])
   return render_template('thanks.html')
@@ -220,9 +322,23 @@ def login():
   else:
     return redirect('/')
 
+@app.route('/create_user', methods=['POST'])
+def create_user():
+  result = g.conn.execute("SELECT * FROM person WHERE username = '{}'".format(request.form['username']))
+  if result:
+    for r in result:
+      return render_template("user_exists.html")
+    
+    g.conn.execute("INSERT INTO person(username, name, password) VALUES ('{}','{}','{}')".format(request.form['username'], request.form['name'], request.form['password']))
+    return render_template('login.html')
+
 @app.route('/user')
 def user():
   return render_template("user.html")
+
+@app.route('/signup')
+def signup():
+  return render_template("signup.html")
 
 
 if __name__ == "__main__":
