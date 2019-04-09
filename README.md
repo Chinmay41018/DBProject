@@ -2,7 +2,7 @@ Database Project by Chinmay Joshi (caj2163) and Ashna Aggarwal (aa4213)
 
 PostgreSQL account: aa4213
 
-URL: http://34.73.197.145:8111/user
+URL: http://34.73.197.145:8111/
 
 As mentioned in the first part of the project, we implement our own IMDB-like application. We allow users the ability to rate and review movies and TV shows, and also enable them to search for their favoraite media files to look for more details. The details include the language of the media, actors, awards, ratings, reviews and dependeing on the type (movie or series), we have duration or number of episodes and number of seasons. We have also extended the search to look for actors. We display their personal information and list the movies and series they have worked in.
 
