@@ -1,0 +1,45 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<body>
+  <h1>Media results</h1><br>
+  <div> {% if data|length == 0  %}
+    <div>
+        <div> No results found </div>
+    </div>
+    {% else %}
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Language</th>
+        <th>Genre</th>
+        <th>Year</th>
+        <th>Type</th>
+      </tr>
+      {% for n in data%} 
+      <tr>
+        <th>{{n['name']}}</th>
+        <th>{{n['language']}}</th>
+        <th>{{n['genre']}}</th>
+        <th>{{n['year']}}</th>
+        <th>{{n['type']}}</th>
+      </tr>
+      {% endfor %}
+    </table>
+    <br>
+          
+    {% endif %}
+</div>
+ 
+  <br>
+  <p><a href="media_view">Modify filters</a></p>
+  <p><a href="user">Go back to the home page</a></p>
+</body>
+
+
+</html>

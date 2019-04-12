@@ -164,7 +164,14 @@ def index():
 # The functions for each app.route need to have different names
 #
 
-def get_media_details(r):
+@app.route('/get_media_details', methods=['POST'])
+def get_media_details():
+  res = awards = g.conn.execute("SELECT * FROM media WHERE mediaid = {} ".format(request.form['media']))
+  if res:
+    for x in res:
+      r = x
+      break
+
   info = dict(r)
   print("Started here")
   info['awards'] = []
@@ -221,7 +228,13 @@ def get_media_details(r):
   context = dict(data = info)
   return render_template("displayMediaInfo.html",**context)
 
-def get_actor_details(r):
+@app.route('/get_actor_details', methods=['POST'])
+def get_actor_details():
+  res = g.conn.execute("SELECT * FROM actor WHERE actorid = {} ".format(request.form['actor']))
+  if res:
+    for x in res:
+      r = x
+      break
   info = dict(r)
 
   info['medias'] = []
@@ -252,21 +265,52 @@ def review():
 def search():
   return render_template("search.html")
 
-@app.route('/search_query', methods=["POST"])
+@app.route('/search_actor', methods=["POST"])
 def search_query():
-  if request.form['search_type'] == 'media':
-    result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['query']))
-    if result:
-      for r in result:
-        return get_media_details(r)
-      return render_template('search.html')   
-  else:
-    result = g.conn.execute("SELECT * FROM actor WHERE name = '{}' ".format(request.form['query']))
-    if result:
-      for r in result:
-        return get_actor_details(r)
-      return render_template('search.html')  
+  # if request.form['search_type'] == 'media':
+  #   result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['query']))
+  #   if result:
+  #     for r in result:
+  #       return get_media_details(r)
+  #     return render_template('search.html')   
+  # else:
+  result = g.conn.execute("SELECT * FROM actor WHERE LOWER(name) LIKE LOWER('%%{}%%') ".format(request.form['query']))
+  output = []
+  if result:
+    for r in result:
+      output.append({
+        'name': r['name'],
+        'id': r['actorid']
+      })
+    context = dict(data = output)
+    return render_template("displayactor.html",**context)
+  return render_template('search.html')  
 
+@app.route('/actor')
+def actor():
+  return render_template('actor.html')
+
+@app.route('/media')
+def media():
+  return render_template('media.html')
+
+@app.route('/media_search')
+def media_search():
+  return render_template('media_search.html')
+
+@app.route('/search_media', methods= ['POST'])
+def search_media():
+  result = g.conn.execute("SELECT * FROM media WHERE LOWER(name) LIKE LOWER('%%{}%%') ".format(request.form['query']))
+  output = []
+  if result:
+    for r in result:
+      output.append({
+        'name': r['name'],
+        'id': r['mediaid']
+      })
+    context = dict(data = output)
+    return render_template("displaymedialist.html",**context)
+  return render_template('search.html')  
 
 @app.route('/write_review', methods=['POST'])
 def write_review():
@@ -295,6 +339,93 @@ def submit_review():
   # result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))  
   # print(request.args['messages'])
   return render_template('thanks.html')
+
+@app.route('/media_view', methods=['GET'])
+def media_view():
+  res = g.conn.execute('SELECT * from media')
+  genres = []
+  language = []
+  years = []
+  if res:
+    for x in res:
+      genres.append(x['genre'])
+      language.append(x['language'])
+      years.append(x['yearofrelease'])
+  genres = list(set(genres))
+  language = list(set(language))
+  years = list(set(years))
+  years.sort()
+  years = ["All"] + years 
+  genres = ["All"] + genres
+  language = ["All"] + language
+  actors = [("All","All")]
+  type_ = ["All","series", "movie"]
+  res = g.conn.execute('SELECT name, actorid from actor order by name')
+  if res:
+    for x in res:
+      actors.append((x['name'], x['actorid']))
+  data = {}
+  data['genre'] = genres
+  data['language'] = language
+  data['actor'] = actors
+  data['year'] = years
+  data['type'] = type_
+  context = dict(data = data)
+  return render_template('media_view.html',**context)  
+
+@app.route('/filter_view_media',methods = ['POST'])
+def filter_view_media():
+  query = "SELECT DISTINCT(m.mediaid), name, genre, language, yearofrelease, type FROM media m INNER JOIN acts_in a1 ON m.mediaid = a1.mediaid INNER JOIN acts_in a2 ON m.mediaid = a2.mediaid"
+   
+  conditions = " WHERE a2.actorid != a1.actorid"
+  if request.form['actor1'] != "All":
+    print(request.form['actor1'])
+    conditions += " AND a1.actorid = {}".format(request.form['actor1'])
+    print(conditions)
+  if request.form['actor2'] != "All":
+    conditions += " AND a2.actorid = {}".format(request.form['actor2'])
+
+  if request.form['type'] != 'All':
+    if conditions != "":
+      conditions += " AND type = '{}'".format(request.form['type']) 
+    else:
+      conditions += "type = '{}'".format(request.form['type']) 
+
+  if request.form['language'] != 'All':
+    if conditions != "":
+      conditions += " AND language = '{}'".format(request.form['language']) 
+    else:
+      conditions += "language = '{}'".format(request.form['language']) 
+
+  if request.form['genre'] != 'All':
+    if conditions != "":
+      conditions += " AND genre = '{}'".format(request.form['genre']) 
+    else:
+      conditions += "genre = '{}'".format(request.form['genre']) 
+
+  if request.form['year'] != 'All':
+    if conditions != "":
+      conditions += "AND year = '{}'".format(request.form['year']) 
+    else:
+      conditions += "year = {}".format(request.form['year']) 
+
+  # if conditions != "":
+  query += conditions
+  print(query)
+  res = g.conn.execute(query)
+  output = []
+  if res:
+    for x in res:
+      output.append({
+        'name': x['name'],
+        'year': x['yearofrelease'],
+        'language': x['language'],
+        'genre': x['genre'],
+        'type': x['type']
+      })
+    context = dict(data=output)
+    return render_template('display_media_filter_list.html', **context)
+
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])

@@ -1,0 +1,75 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+
+  <h1>Filter your media</h1>
+  <div>
+  <form method="POST" action="/filter_view_media">
+    <br>
+    Actor 1:
+    <select name="actor1">
+      {% for n in data['actor']%} 
+        <option value="{{n[1]}}">{{n[0]}}</option>
+          <br>
+      {% endfor %}
+    </select>
+    <br>
+    Actor 2:
+    <select name="actor2">
+        {% for n in data['actor']%} 
+          <option value="{{n[1]}}">{{n[0]}}</option>
+            <br>
+        {% endfor %}
+      </select>
+      <br>
+      Type:
+      <select name="type">
+          {% for n in data['type']%} 
+            <option value="{{n}}">{{n}}</option>
+              <br>
+          {% endfor %}
+      </select>
+      <br>
+      Year:
+      <select name="year">
+          {% for n in data['year']%} 
+            <option value="{{n}}">{{n}}</option>
+              <br>
+          {% endfor %}
+      </select>
+      <br>
+      Genre:
+      <select name="genre">
+          {% for n in data['genre']%} 
+            <option value="{{n}}">{{n}}</option>
+              <br>
+          {% endfor %}
+      </select>
+      <br>
+      Language:
+      <select name="language">
+          {% for n in data['language']%} 
+            <option value="{{n}}">{{n}}</option>
+              <br>
+          {% endfor %}
+      </select>
+      <input type="submit" value="Submit">
+          </p>
+      </form>
+    </div>
+  <!-- <div>{{data}}</div> -->
+
+<!-- <p><a href="another">Go to the other page</a></p> -->
+
+<p><a href="user">Go back to the home page</a></p>
+</body>
+
+
+</html>
