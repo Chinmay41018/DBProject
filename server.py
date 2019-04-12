@@ -228,6 +228,22 @@ def get_media_details():
   context = dict(data = info)
   return render_template("displayMediaInfo.html",**context)
 
+@app.route('/search_media_for_review', methods=['POST'])
+def search_media_for_review():
+  result = g.conn.execute("SELECT * FROM media WHERE LOWER(name) LIKE LOWER('%%{}%%') ".format(request.form['media_name']))
+  output = []
+  if result:
+    for r in result:
+      output.append({
+        'id': r['mediaid'],
+        'name': r['name']
+      })
+
+    context = dict(data = output)      
+    return render_template('select_review_item.html', **context)
+  return render_template('review.html')
+
+
 @app.route('/get_actor_details', methods=['POST'])
 def get_actor_details():
   res = g.conn.execute("SELECT * FROM actor WHERE actorid = {} ".format(request.form['actor']))
@@ -314,7 +330,7 @@ def search_media():
 
 @app.route('/write_review', methods=['POST'])
 def write_review():
-  result = g.conn.execute("SELECT * FROM media WHERE name = '{}' ".format(request.form['media_name']))
+  result = g.conn.execute("SELECT * FROM media WHERE mediaid = {} ".format(request.form['media_name']))
   if result:
     for r in result:
       print(r)
