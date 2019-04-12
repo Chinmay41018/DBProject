@@ -405,7 +405,7 @@ def filter_view_media():
 
   if request.form['year'] != 'All':
     if conditions != "":
-      conditions += "AND year = '{}'".format(request.form['year']) 
+      conditions += " AND year = '{}'".format(request.form['year']) 
     else:
       conditions += "year = {}".format(request.form['year']) 
 
